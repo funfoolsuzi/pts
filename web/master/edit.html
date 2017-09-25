@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>FFSZ-Master Post Editor</title>
+	<style>
+		#main{
+			position:absolute;
+			left:5px;
+			right:5px;
+			top:5px;
+			bottom:5px;
+			border: 1px solid black;
+			text-align:center;
+		}
+		#tag_inp_area{
+			display:inline;
+		}
+		#content_inp{
+			width:90%;
+			height:75%;
+		}
+		@media all and (max-height:600px){
+			#content_inp{height:65%;}
+		}
+		@media all and (max-height:400px){
+			#content_inp{height:55%;}
+		}
+	</style>
+</head>
+<body>
+	<div id="main">
+		<br>
+		title:<input type="text" id="title_inp">
+		<br>
+		tag:<div id="tag_inp_area"></div>
+		<br><br>
+		<textarea id="content_inp"></textarea>
+		<br><br>
+		<button id="submit_but">Save</button> &nbsp &nbsp &nbsp <button onclick="window.location.href='/master/menu.html';">Back</button>
+	</div>
+</body>
+<script>
+var id = window.location.href.replace(/(?:.*edit\/(\d{8})$)/,"$1");
+var title_inp = document.getElementById("title_inp");
+var content_inp = document.getElementById("content_inp");
+var submit_but = document.getElementById("submit_but");
+var tags;
+
+function savecontent_handle(){
+	if(this.readyState==4&&this.status==200){
+		if(this.response=="NA")document.body.innerHTML = "<a href=\"/master/menu.html\">Refresh</a><br><a href=\"/mlogin.html\">Back to Log in</a>";
+		console.log(this.response);
+	}
+}
+function submit(){
+	var savepost_xhr = new XMLHttpRequest();
+	savepost_xhr.onreadystatechange = savecontent_handle;
+	savepost_xhr.open("PUT","/master/save/"+id);
+	savepost_xhr.setRequestHeader("Sid", document.cookie.replace(/(?:(?:^|.*;\s*)sid\s*\=\s*([^;]*).*$)|^.*$/,"$1"));
+	savepost_xhr.send(tags+"\r\n\r\n"+title_inp.value+"\r\n\r\n"+content_inp.value);
+}
+function getcontent_handle(){
+	if(this.readyState==4&&this.status==200){
+		var post = this.response.split("\r\n\r\n", 3);
+		tags = post[0];
+		title_inp.value = post[1];
+		document.title = ("FFSZ-Master Post Editor: "+post[1]);
+		content_inp.value = post[2];
+		submit_but.onclick=submit;
+	}
+}
+
+var getcontent_xhr = new XMLHttpRequest();
+getcontent_xhr.onreadystatechange = getcontent_handle;
+getcontent_xhr.open("GET", "/post/"+id);
+getcontent_xhr.send();
+</script>
+</html>

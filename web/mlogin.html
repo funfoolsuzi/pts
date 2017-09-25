@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>FFSZ master login</title>
+	<meta name='viewport' content='width=device-width,initial-scale=1.0'>
+	<script src="/master/core-min.js"></script>
+	<script src="/master/sha256-min.js"></script>
+	<style>
+		*{
+			font-family:helvetica, sans-serif;
+			font-weight:100;
+		}
+		html,body{
+			width:100%;
+			margin:0;
+		}
+		#login-dialogue{
+			position:absolute;
+			top:30%;
+			width:100%;
+			text-align:center;
+		}
+	</style>
+</head>
+<body>
+	<div id="login-dialogue">
+		<br>
+		username: <input id="master-username" type="text">
+		<br><br>
+		password: <input id="master-password" type="password">
+		<br><br>
+		<button id="submitbtn">Log In</button>
+	</div>
+	<script>
+//functions:
+function getcookie(cookiename){
+	return document.cookie.replace(new RegExp("(?:(?:^|.*;\s*)"+cookiename+"\s*\=\s*([^;]*).*$)|^.*$"),"$1");
+}
+function submit_handle(){
+	if(this.readyState==4&&this.status==200){
+		var res = this.response;
+		console.log(res);
+		if(res=="login_succ"){
+			console.log("sid:"+getcookie("sid"));
+			window.location.href = "/master/menu.html";
+		} else {
+		}
+	}
+}
+function loginsubmit(){
+	var usnm = document.getElementById("master-username").value;
+	var pswd_hashed = CryptoJS.SHA256(document.getElementById("master-password").value).toString(CryptoJS.enc.Base64);
+	console.log(pswd_hashed);
+	var login_xhr = new XMLHttpRequest();
+	login_xhr.onreadystatechange = submit_handle;
+	login_xhr.open("POST","/master/login");
+	login_xhr.send(usnm+"\r\n"+pswd_hashed);
+}
+//function
+		document.getElementById("submitbtn").onclick = loginsubmit;
+	</script>
+</body>
+</html>

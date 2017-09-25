@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width,initial-scale=1.0">
+	<style>
+		body{
+			text-align:center;
+			font-family:helvetica, sans-serif;
+		}
+		.edit_post_but{
+			margin:5px;
+		}
+		.edit_post_but:hover, edit_post_but:active{
+			cursor:pointer;
+			font-weight:800;
+		}
+		.menu_item{
+			font-size:130%;
+			padding:1em;
+			margin:0 auto;
+			border-radius:1em;
+			background-color:lightgreen;
+			width:6em;
+		}
+		.menu_item:hover, .menu_item:active{
+			cursor:pointer;
+			background-color:darkgreen;
+			color:white;
+		}
+	</style>
+</head>
+<body>
+	<br><br><br>
+	<div id="newpost" class="menu_item">New</div>
+	<br>
+	<div id="editpost" class="menu_item">Edit</div>
+</body>
+<script>
+
+//global variables:
+var page_status = 0;
+var sid = document.cookie.replace(/(?:(?:^|.*;\s*)sid\s*\=\s*([^;]*).*$)|^.*$/,"$1");
+/*	000 0 is disabled
+	001 1 is ready
+	010 2 is disabled, new is active
+	100 4 is disabled, edit is active
+*/
+var num_of_time_load = 1;
+
+//functions:
+function logincheck(){
+	var idcheckxhr = new XMLHttpRequest();
+	idcheckxhr.onreadystatechange = function(){
+		if(this.readyState==4&&this.status==200){
+			var res = this.response;
+			console.log("res:"+res);
+			if(res!="OK")document.body.innerHTML = "<a href=\"/master/menu.html\">Refresh</a><br><a href=\"/mlogin.html\">Back to Log in</a>";
+			else page_status = 1;
+		}
+	};
+	idcheckxhr.open("POST", "/master/logincheck");
+	idcheckxhr.setRequestHeader("Sid",sid);
+	idcheckxhr.send();
+}
+
+function create_dial(){
+	if(page_status!=1)return false;
+	var q = document.createElement("div");
+	q.setAttribute("id","create_dia");
+	document.body.appendChild(q);
+	q.style.cssText = "width:300px;height:150px;margin:0 auto;background-color:lightblue;text-align:center;";
+	q.innerHTML = "<br><br>Title:<input id=\"title_inp\" type=\"text\" value=\"untitle\"><br><br><button id=\"create_but\">Create!</button>  <button onclick=\"close_create_dial()\">Cancel</button>";
+	page_status = 2;
+	document.getElementById("create_but").onclick = create_send;
+}
+
+function create_send(){
+	var create_xhr = new XMLHttpRequest();
+	create_xhr.onreadystatechange = create_handle;
+	create_xhr.open("PUT", "/master/create");
+	create_xhr.setRequestHeader("Sid", sid);
+	create_xhr.send("\r\n\r\n"+document.getElementById("title_inp").value+"\r\n\r\n");
+}
+
+function create_handle(){
+	if(this.readyState==4&&this.status==200){
+		var res = this.response;
+		window.location.href=("/master/edit/"+res);
+	}
+}
+
+function edit_dial(){
+	if(page_status!=1)return false;
+	var q = document.createElement("div");
+	q.setAttribute("id","edit_dia");
+	document.body.appendChild(q);
+	page_status = 4;
+	q.style.cssText = "width:300px;margin:0 auto; background-color:lightyellow;text-align:center;padding:5px;";
+	q.insertAdjacentHTML('beforeend', "<div id=\"buoy\"></div><button onclick=\"loadmore()\">Load more</button>  <button onclick=\"close_edit_dial()\">Cancel</button><br><br>");
+	var edit_list_xhr = new XMLHttpRequest();
+	edit_list_xhr.onreadystatechange = function(){
+		if(this.readyState==4&&this.status==200){
+			var res = this.response;
+			if(res.length%8!==0)console.log("edit_list_xhr.response has invalid length");
+			else {
+				for(var idx=0; idx<res.length/8; idx++){
+					var post_id = res.substr(idx*8, 8);
+					document.getElementById("buoy").insertAdjacentHTML('beforeend',"<div class=\"edit_post_but\" onclick=\"window.location.href='/master/edit/"+post_id+"'\">"+post_id+"</div>");
+				}
+			}
+		}
+	}
+	edit_list_xhr.open("GET", "/list/1");
+	edit_list_xhr.send();
+}
+
+function close_create_dial(){
+	document.body.removeChild(document.getElementById("create_dia"));
+	page_status = 1;
+}
+
+function close_edit_dial(){
+	document.body.removeChild(document.getElementById("edit_dia"));
+	page_status = 1;
+}
+
+function loadmore(){
+	var loadmore_xhr = new XMLHttpRequest();
+	if(num_of_time_load===1)num_of_time_load++;
+	loadmore_xhr.onreadystatechange = function(){
+		if(this.readyState==4&&this.status==200){
+			if(this.response!=="NO"){
+				num_of_time_load++;
+				if(this.response.length%8!==0)console.log("loadmore_xhr.response has invalid length");
+				else {
+					for(var idx=0; idx<this.response.length/8; idx++){
+						var post_id = this.response.substr(idx*8, 8);
+						document.getElementById("buoy").insertAdjacentHTML('beforeend',"<div class=\"edit_post_but\" onclick=\"window.location.href='/master/edit/"+post_id+"'\">"+post_id+"</div>")
+					}
+				}
+			} else {
+				
+			}
+			console.log(this.response);
+		}
+	}
+	loadmore_xhr.open("GET", "/list/"+num_of_time_load);
+	loadmore_xhr.send();
+}
+
+//function
+
+logincheck();
+
+var np_button = document.getElementById("newpost");
+var ep_button = document.getElementById("editpost");
+
+np_button.onclick = create_dial;
+ep_button.onclick = edit_dial;
+
+</script>
+</html>

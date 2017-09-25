@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" height="20" width="280">
+	<path d='M 0 10 Q 40 0, 60 10 Q 80 20, 120 10' stroke='black' stroke-width='1' fill='transparent' />
+	<path d='M 80 10 Q 120 0, 140 10 Q 160 20, 200 10' stroke='grey' stroke-width='1' fill='transparent' />
+	<path d='M 160 10 Q 200 0, 220 10 Q 240 20, 280 10' stroke='black' stroke-width='1' fill='transparent' />
+</svg>

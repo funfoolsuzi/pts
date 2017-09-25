@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>FFSZ</title>
+		<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+		<style>
+			*{
+				font-family:helvetica, sans-serif;
+				font-weight:100;
+			}
+			html,body{
+				height:100%;
+				width:100%;
+				margin:0;
+			}
+			#title-block{
+				position:fixed;
+				width:100%;
+				margin:5px;
+				z-index:10;
+			}
+			#title-board{
+				font-size:300%;
+				text-align:center;
+				color:grey;
+			}
+			#separator{
+				top:200px;
+				display:block;
+				margin:0 auto;
+			}
+			#main-content{
+				position:absolute;
+				overflow:scroll;
+				top:111px;
+				bottom:0px;
+				width:100%;
+				z-index:0;
+			}
+			#load-more-button{
+				width:9em;
+				margin:0 auto;
+				margin-top:2em;
+				padding:0.3em;
+				color:grey;
+				font-size:130%;
+				border-radius:0.3em;
+				border:1px solid white;
+				text-align:center;
+			}
+			#load-more-button:hover, #load-more-button:active{
+				border:1px solid darkgrey;
+				cursor:pointer;
+				color:black;
+			}
+			.content-container{
+				margin:0 auto;
+				width:90%;
+				margin-top:2em;
+				margin-bottom:2em;
+			}
+			.content-title{
+				margin:5px;
+				font-size:150%;
+				color:darkbrown;
+			}
+			.content-separator{
+				display:block;
+				margin:5px;
+			}
+			.content-content{
+				margin:5px;
+				font-size:110%;
+			}
+			@media all and (min-width:400px){
+				.content-container{
+					width:80%;
+				}
+			}
+			@media all and (min-width:800px){
+				.content-container{
+					width:55%;
+				}
+			}
+		</style>
+		<script>
+		
+		</script>
+	</head>
+	<body>
+		<div id="wx_pic" style="margin:0 auto;display:none;">
+			<img src="/graph/ffsz.jpg">
+		</div>
+		<div id='title-block'>
+			<div id='title-board'>Fun<span style='color:black'>Fool</span>Suzi</div>
+			<br>
+				<object id='separator' data="/graph/threecurve.svg" type="image/svg+xml"></object>
+			<br>
+		</div>
+		<div id='main-content'>
+			<div id='load-more-button'>Load More</div>
+		</div>
+	</body>
+<script>
+
+var load_t = 1;
+
+//functions:
+
+function create_post_req_handle(id){
+	return function(){
+		if(this.readyState==4&&this.status==200){
+			var post = this.response.split("\r\n\r\n",3);
+			var post_element = document.getElementById(id);
+			post_element.innerHTML = "<div class='content-title'>"+post[1]+"</div><object class='content-separator' data='/graph/wallteeth.svg' type='image/svg+xml'></object><div class='content-content'>"+post[2]+"</div>"
+			post_element.classList.add("content-container");
+		}
+	}
+}
+
+
+
+function init_req_handle(){
+	if(this.readyState==4&&this.status==200){
+		//split the response into different ids
+		//first check if it is legitimate
+		var res = this.response;
+		console.log("res:"+res);
+		if(res!=="NO"){
+			load_t++;
+			if(res.length%8!==0)console.log("init_xhr.response has invalid length");
+			else{
+				for(var idx=res.length/8-1; idx>=0; idx--){
+					var post_id = res.substr(idx*8, 8);
+					var post_element = document.createElement("div");
+					post_element.setAttribute("id", post_id);
+					document.getElementById("load-more-button").insertAdjacentElement('beforeBegin',post_element);
+					var post_xhr = new XMLHttpRequest();
+					post_xhr.onreadystatechange=create_post_req_handle(post_id);
+					post_xhr.open("GET", "post/"+post_id);
+					post_xhr.send();
+				}
+			}
+		} else {//res = "NO"
+			var lmb = document.getElementById("load-more-button");
+			lmb.onclick = null;
+			for(var idx = 0; idx<=3; idx++){
+				window.setTimeout(function(sec){
+					if(sec>=3){
+						lmb.innerText = "Load More";
+						lmb.onclick = load_more;
+					}
+					else lmb.innerText = ("No More("+ (3-sec) +")");
+				},idx*1000, idx);
+			}
+		}
+	}
+}
+
+function load_more(){
+	var load_xhr = new XMLHttpRequest();
+	load_xhr.onreadystatechange=init_req_handle;
+	load_xhr.open("GET", "/list/"+load_t);
+	load_xhr.send();
+}
+
+//
+
+var init_xhr = new XMLHttpRequest();
+init_xhr.onreadystatechange=init_req_handle;
+init_xhr.open("GET", "/list/"+load_t);
+init_xhr.send();
+
+document.getElementById("load-more-button").onclick = load_more;
+</script>
+</html>
